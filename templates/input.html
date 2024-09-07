@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Input Page</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .gallery {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .gallery img {
+            width: 100px; /* Thumbnail size */
+            height: 100px; /* Thumbnail size */
+            object-fit: cover;
+            cursor: pointer;
+            border: 2px solid #fff;
+            border-radius: 5px;
+        }
+    </style>
+    <script>
+        async function removeFile(filename) {
+            if (confirm(`Are you sure you want to delete ${filename}?`)) {
+                const response = await fetch(`/delete/${filename}`, { method: 'POST' });
+                const result = await response.json();
+                if (result.success) {
+                    alert(`${filename} has been removed.`);
+                    loadUploadedFiles();
+                } else {
+                    alert('Failed to remove the file.');
+                }
+            }
+        }
+
+        async function loadUploadedFiles() {
+            const response = await fetch('/media');
+            const files = await response.json();
+            const gallery = document.getElementById('gallery');
+            gallery.innerHTML = '';  // Clear the gallery
+
+            if (files.length > 0) {
+                files.forEach(file => {
+                    const img = document.createElement('img');
+                    img.src = `/images/{{ user_id }}/${file}`;
+                    img.title = file;
+
+                    img.onclick = () => removeFile(file);
+                    gallery.appendChild(img);
+                });
+            } else {
+                gallery.innerHTML = '<p>No files uploaded.</p>';
+            }
+        }
+
+        window.onload = loadUploadedFiles;
+    </script>
+</head>
+<body>
+    <h1>Control Display and Upload Media</h1>
+    <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
+        <label for="files">Upload Images:</label>
+        <input type="file" name="files" id="files" accept="image/*" multiple>
+        <br><br>
+        <label for="display_status">Display Status:</label>
+        <select name="display_status" id="display_status">
+            <option value="on">On</option>
+            <option value="off">Off</option>
+        </select>
+        <br><br>
+        <button type="submit">Submit</button>
+    </form>
+    <h2>Uploaded Files</h2>
+    <div id="gallery" class="gallery"></div>
+    <p><a href="{{ url_for('display_page') }}" target="_blank">Go to Display Page</a></p>
+    <p><a href="{{ url_for('logout') }}">Logout</a></p>
+</body>
+</html>
